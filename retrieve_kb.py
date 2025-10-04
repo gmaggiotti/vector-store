@@ -14,4 +14,4 @@ results = collection.query(
 )
 
 for article in results["documents"]:
-    print(article , "\n")
+    print(article, "\n")
