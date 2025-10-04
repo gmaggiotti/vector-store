@@ -30,34 +30,30 @@ store = VectorStoreFactory.create_store('chromadb', collection_name='my_docs')
 # Create a manager for easier operations
 manager = VectorStoreManager(store)
 
-# Add sample data and search
-manager.setup_with_sample_data()
-manager.search("programming languages")
+# Get store information and search
+manager.get_info()
+manager.search("your search query")
 ```
 
-### Configuration-Based Usage
+### Direct Usage with Vector Database Classes
 
 ```python
-from configurable_vector_store import ConfigurableVectorStore
+from vector_dbs.chromadb_store import ChromaDBStore
+from vector_dbs.pinecone_store import PineconeStore
 
-# Initialize with configuration
-config = {
-    "store_type": "chromadb",
-    "chromadb": {
-        "collection_name": "my_documents",
-        "persist_directory": "./my_chroma_store"
-    }
-}
-
-vector_store = ConfigurableVectorStore(config_dict=config)
+# ChromaDB usage
+chroma_store = ChromaDBStore(
+    collection_name="my_documents",
+    persist_directory="./chroma_store"
+)
 
 # Add documents
 documents = ["Document 1 text", "Document 2 text"]
 ids = ["doc1", "doc2"]
-vector_store.add_documents(documents, ids)
+chroma_store.add_documents(documents, ids)
 
 # Search
-results = vector_store.query("search query", top_k=5)
+results = chroma_store.query("search query", top_k=5)
 ```
 
 ## API Reference
@@ -65,6 +61,8 @@ results = vector_store.query("search query", top_k=5)
 ### VectorStore (Abstract Base Class)
 
 ```python
+from vector_dbs.vector_store import VectorStore
+
 class VectorStore(ABC):
     def add_documents(self, documents: List[str], ids: List[str], metadatas: Optional[List[Dict[str, Any]]] = None) -> None
     def query(self, query_text: str, top_k: int = 5, filters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]
@@ -75,6 +73,8 @@ class VectorStore(ABC):
 ### ChromaDBStore
 
 ```python
+from vector_dbs.chromadb_store import ChromaDBStore
+
 # Initialize
 store = ChromaDBStore(
     collection_name="documents",
@@ -88,6 +88,8 @@ store.load_documents_from_directory("./content", "*.txt")
 ### PineconeStore
 
 ```python
+from vector_dbs.pinecone_store import PineconeStore
+
 # Initialize
 store = PineconeStore(
     api_key="your-api-key",  # or None to load from file
@@ -102,7 +104,7 @@ store.create_index(cloud="aws", region="us-east-1")
 
 ## Configuration File Format
 
-Create a `vector_store_config.json` file:
+Create a `vector_store_config.json` file for configuration-based usage:
 
 ```json
 {
@@ -119,16 +121,31 @@ Create a `vector_store_config.json` file:
 }
 ```
 
-## File Structure
+## Project Structure
 
 ```
-├── vector_store.py              # Abstract base class
-├── chromadb_store.py           # ChromaDB implementation
-├── pinecone_store.py           # Pinecone implementation
-├── vector_store_demo.py        # Factory and demo usage
-├── configurable_vector_store.py # Configuration-based usage
-├── requirements.txt            # Dependencies
-└── vector_store_config.json    # Sample configuration
+├── vector_dbs/                 # Core vector database implementations
+│   ├── __init__.py            # Package initialization
+│   ├── vector_store.py        # Abstract base class
+│   ├── chromadb_store.py      # ChromaDB implementation
+│   └── pinecone_store.py      # Pinecone implementation
+├── chromadb_examples/         # ChromaDB specific examples
+│   ├── kb_in_memory.py        # In-memory knowledge base example
+│   ├── load_kb.py             # Load knowledge base example
+│   └── retrieve_kb.py         # Retrieve from knowledge base example
+├── pinecone_examples/         # Pinecone specific examples
+│   ├── create_index.py        # Create Pinecone index example
+│   └── query_db.py            # Query Pinecone database example
+├── content/                   # Sample documents for testing
+│   ├── gabe.txt
+│   ├── status1.txt
+│   ├── status2.txt
+│   └── status3.txt
+├── chroma_store/              # ChromaDB persistence directory
+├── vector_store_demo.py       # Main demo with factory pattern
+├── requirements.txt           # Python dependencies
+├── pinecone_key.json          # Pinecone API key configuration
+└── README.md                  # This file
 ```
 
 ## Examples
@@ -136,7 +153,7 @@ Create a `vector_store_config.json` file:
 ### Example 1: Basic ChromaDB Usage
 
 ```python
-from chromadb_store import ChromaDBStore
+from vector_dbs.chromadb_store import ChromaDBStore
 
 # Create store
 store = ChromaDBStore(collection_name="test_docs")
@@ -156,7 +173,7 @@ print(results[0]["document"])  # "Hello world"
 ### Example 2: Basic Pinecone Usage
 
 ```python
-from pinecone_store import PineconeStore
+from vector_dbs.pinecone_store import PineconeStore
 
 # Create store (requires valid API key)
 store = PineconeStore(index_name="test-index")
@@ -174,32 +191,49 @@ store.add_documents(documents, ids)
 results = store.query("artificial intelligence", top_k=2)
 ```
 
-### Example 3: Switching Between Stores
+### Example 3: Using the Factory Pattern
 
 ```python
-from configurable_vector_store import ConfigurableVectorStore
+from vector_store_demo import VectorStoreFactory, VectorStoreManager
 
-# Start with ChromaDB
-vector_store = ConfigurableVectorStore(config_dict={
-    "store_type": "chromadb",
-    "chromadb": {"collection_name": "test"}
-})
+# Create ChromaDB store using factory
+store = VectorStoreFactory.create_store(
+    'chromadb',
+    collection_name="my_docs",
+    persist_directory="./my_chroma_store"
+)
 
-# Add some documents
-vector_store.add_documents(["test doc"], ["id1"])
+# Create manager for easier operations
+manager = VectorStoreManager(store)
 
-# Switch to Pinecone (if configured)
-vector_store.switch_store("pinecone")
+# Get information about the store
+manager.get_info()
+
+# Search for documents
+manager.search("your search query", top_k=5)
 ```
 
 ## Running the Examples
 
+### Main Demo
 ```bash
-# Run the basic demo
+# Run the main demo with factory pattern
 python vector_store_demo.py
+```
 
-# Run the configurable demo
-python configurable_vector_store.py
+### ChromaDB Examples
+```bash
+# Run ChromaDB specific examples
+python chromadb_examples/kb_in_memory.py
+python chromadb_examples/load_kb.py
+python chromadb_examples/retrieve_kb.py
+```
+
+### Pinecone Examples
+```bash
+# Run Pinecone specific examples (requires API key setup)
+python pinecone_examples/create_index.py
+python pinecone_examples/query_db.py
 ```
 
 ## Notes
