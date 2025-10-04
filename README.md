@@ -67,7 +67,7 @@ class VectorStore(ABC):
     def add_documents(self, documents: List[str], ids: List[str], metadatas: Optional[List[Dict[str, Any]]] = None) -> None
     def query(self, query_text: str, top_k: int = 5, filters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]
     def delete_documents(self, ids: List[str]) -> None
-    def get_collection_info(self) -> Dict[str, Any]
+    def get_collection_info(self) -> Dict[str, Any] 
 ```
 
 ### ChromaDBStore
