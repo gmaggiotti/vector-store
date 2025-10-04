@@ -1,0 +1,7 @@
+# Vector Store Dependencies
+chromadb>=0.4.0
+pinecone-client>=3.0.0
+
+# Optional: For additional functionality
+numpy>=1.21.0
+typing-extensions>=4.0.0

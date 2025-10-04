@@ -3,3 +3,4 @@
 chroma_store/
 content/
 pinecone_key.json
+__pycache__/
