@@ -8,12 +8,12 @@ class VectorStoreFactory:
     """Factory class to create vector store instances."""
     
     @staticmethod
-    def create_store(store_type: str, **kwargs) -> VectorStore:
+    def create_store(store_type: str, store_conf: dict) -> VectorStore:
         """Create a vector store instance.
         
         Args:
             store_type: Type of store ('chromadb' or 'pinecone')
-            **kwargs: Configuration parameters specific to each store type
+            store_conf: Configuration dictionary for the store
             
         Returns:
             VectorStore instance
@@ -21,17 +21,18 @@ class VectorStoreFactory:
         Raises:
             ValueError: If store_type is not supported
         """
+
         if store_type.lower() == 'chromadb':
             return ChromaDBStore(
-                collection_name=kwargs.get('collection_name', 'documents'),
-                persist_directory=kwargs.get('persist_directory', './chroma_store')
+                collection_name=store_conf.get('collection_name'),
+                persist_directory=store_conf.get('persist_directory')
             )
         elif store_type.lower() == 'pinecone':
             return PineconeStore(
-                api_key=kwargs.get('api_key'),
-                index_name=kwargs.get('index_name', 'my-index'),
-                key_file=kwargs.get('key_file', './pinecone_key.json'),
-                embedding_model=kwargs.get('embedding_model', 'multilingual-e5-large')
+                api_key=store_conf.get('api_key'),
+                index_name=store_conf.get('index_name', 'my-index'),
+                key_file=store_conf.get('key_file', './pinecone_key.json'),
+                embedding_model=store_conf.get('embedding_model', 'multilingual-e5-large')
             )
         else:
             raise ValueError(f"Unsupported store type: {store_type}. Supported types: 'chromadb', 'pinecone'")
@@ -73,7 +74,42 @@ class VectorStoreManager:
         print()
 
 
+def load_store_config(storedb_name: str) -> dict:
+    """Load vector store configuration from a JSON file.
+    
+    Args:
+        storedb_name: Name of the vector store to load configuration for.
+        
+    Returns:
+        A dictionary containing the configuration for the specified vector store.
+        
+    Raises:
+        FileNotFoundError: If the configuration file is not found.
+        KeyError: If the specified storedb_name is not in the configuration file.
+        ValueError: If there is an error parsing the configuration file.
+    """
+    import json
+    from pathlib import Path
+
+    config_path = Path("./store_conf.json")
+    if not config_path.exists():
+        raise FileNotFoundError(f"Configuration file not found: {config_path}")
+
+    try:
+        with config_path.open('r', encoding='utf-8') as file:
+            config = json.load(file)
+        if storedb_name not in config:
+            raise KeyError(f"Configuration for '{storedb_name}' not found in {config_path}")
+        return config[storedb_name]
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Error parsing JSON configuration file {config_path}: {e}")
+    except Exception as e:
+        raise ValueError(f"Unexpected error loading configuration from {config_path}: {e}")
+
 def main():
+    vectordb_name = 'chromadb'  # Change to 'pinecone' to test PineconeStore
+    store_conf = load_store_config(vectordb_name)
+
     """Example usage of the vector store system."""
     print("Vector Store System Demo")
     print("=" * 50)
@@ -82,11 +118,7 @@ def main():
     print("\n1. ChromaDB Example:")
     print("-" * 20)
     
-    chroma_store = VectorStoreFactory.create_store(
-        'chromadb',
-        collection_name='my_documents',
-        persist_directory='./chroma_store'
-    )
+    chroma_store = VectorStoreFactory.create_store(vectordb_name, store_conf)
     
     chroma_manager = VectorStoreManager(chroma_store)
     chroma_manager.get_info()

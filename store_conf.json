@@ -1,0 +1,10 @@
+{
+    "chromadb": {
+        "collection_name": "my_documents",
+        "persist_directory": "./chroma_store"
+    },
+    "pinecone": {
+        "index_name": "my_index",
+        "key_file": "./pinecone_key.json"
+    }
+}
