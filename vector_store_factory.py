@@ -1,4 +1,3 @@
-from typing import Union
 from vector_dbs.vector_store import VectorStore
 from vector_dbs.chromadb_store import ChromaDBStore
 from vector_dbs.pinecone_store import PineconeStore
