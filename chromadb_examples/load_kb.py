@@ -6,7 +6,7 @@ client = chromadb.PersistentClient(path="./chroma_store")
 collection = client.get_or_create_collection("my_documents")
 
 # Use glob to find all text files in the content directory
-text_files = glob.glob("./content/*.txt")
+text_files = glob.glob("./my_documents/*.txt")
 
 documents = []
 ids = []
